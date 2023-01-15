@@ -23,6 +23,15 @@ module.exports = class {
     return QUEUE_BASE_URL
   }
 
+  async fetchAlbumInfo(albumId) {
+    let response = await fetch(`${API_BASE_URL}/albums/${albumId}?countryCode=${this._countryCode}`, {
+      headers: new Headers({
+        'Authorization': `Bearer ${this._access_token}`
+      })
+    })
+    return response.json()
+  }
+
   async fetchAlbumTracks(albumId) {
     let response = await fetch(`${API_BASE_URL}/albums/${albumId}/items?limit=100&countryCode=${this._countryCode}`, {
       headers: new Headers({

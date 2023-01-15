@@ -49,9 +49,13 @@ module.exports = class {
 
       // do it
       let api = new TidalApi(this._settings)
+      let info = await api.fetchAlbumInfo(albumId)
       let tracks = await api.fetchAlbumTracks(albumId)
       if (cb) {
-        cb(null, tracks)
+        cb(null, {
+          ...info,
+          ...tracks
+        })
       }
 
     } catch (e) {
