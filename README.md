@@ -35,10 +35,10 @@ If you want the server to listen on a specific port, you can configure this in c
 port: 8000
 ```
 
-If you have multiple TIDAL connect devices, you can specify which one to stream to by adding it's IPv4 address in config.yml:
+If you have multiple TIDAL connect devices, you can specify which one to stream to by adding it's friendly name or IPv4 address in config.yml:
 
 ```
-device: 192.168.1.9
+device: My TIDAL connect device
 ```
 
 ## TODO

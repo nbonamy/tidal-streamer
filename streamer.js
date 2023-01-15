@@ -188,7 +188,7 @@ module.exports = class {
     } else if (ips.includes(this._settings.device)) {
       return this._devices[this._settings.device]
     } else {
-      return null
+      return Object.values(this._devices).find((d) => d.name == this._settings.device)
     }
 
   }
