@@ -26,7 +26,7 @@ You can now run the server. It will display a link you need to navigate to autho
 
 ###  Stream album
 
-`curl http://localhost:{port}/stream/album/{albumId}`
+`curl http://localhost:{port}/play/album/{albumId}`
 
 ## Advanced
 
