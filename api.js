@@ -3,6 +3,7 @@
 const AUTH_BASE_URL = 'https://auth.tidal.com/v1/oauth2'
 const API_BASE_URL = 'https://api.tidal.com/v1'
 const QUEUE_BASE_URL = 'https://connectqueue.tidal.com/v1'
+const RESOURCES_BASE_URL = 'https://resources.tidal.com'
 const COUNTRY_CODE = 'US'
 
 module.exports = class {
@@ -22,12 +23,22 @@ module.exports = class {
     return QUEUE_BASE_URL
   }
 
-  async fetchTracks(albumId) {
-    return fetch(`${API_BASE_URL}/albums/${albumId}/items?limit=100&countryCode=${this._countryCode}`, {
+  async fetchAlbumTracks(albumId) {
+    let response = await fetch(`${API_BASE_URL}/albums/${albumId}/items?limit=100&countryCode=${this._countryCode}`, {
       headers: new Headers({
         'Authorization': `Bearer ${this._access_token}`
       })
     })
+    return response.json()
+  }
+
+  async fetchPlaylistTracks(playlistId) {
+    let response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/items?limit=100&countryCode=${this._countryCode}`, {
+      headers: new Headers({
+        'Authorization': `Bearer ${this._access_token}`
+      })
+    })
+    return response.json()
   }
 
   async queueTracks(tracks) {
@@ -64,7 +75,7 @@ module.exports = class {
   }
 
   getAlbumCovers(albumId) {
-    const baseUrl = `https://resources.tidal.com/images/${albumId.replace(/-/g, '/')}`;
+    const baseUrl = `${RESOURCES_BASE_URL}/images/${albumId.replace(/-/g, '/')}`;
     return {
       high: {
         url: `${baseUrl}/1280x1280.jpg`,

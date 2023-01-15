@@ -8,6 +8,10 @@ module.exports = class {
     this._reqid = 0
   }
 
+  getDevice() {
+    return this._device
+  }
+
   shutdown() {
     try {
       //console.log(`Websocket disconnected from ${this._device.name}`)
@@ -38,7 +42,7 @@ module.exports = class {
         reject()
       })
       this._ws.on('message', (message) => {
-        this._process_mg(JSON.parse(message.toString()))
+        this._processMessage(JSON.parse(message.toString()))
       })
 
       // and ping
@@ -95,25 +99,25 @@ module.exports = class {
     }
 
     // do it
-    await this.send_command('loadCloudQueue', params)
-    this.send_command('refreshQueue', { queueId: queue.id })
+    await this._sendCommand('loadCloudQueue', params)
+    this._sendCommand('refreshQueue', { queueId: queue.id })
 
   }
 
-  send_command(command, params) {
-    this._send_msg(JSON.stringify({
+  _sendCommand(command, params) {
+    this._sendMessage(JSON.stringify({
       'command': command,
       'requestId': this._reqid++,
       ...params
     }))
   }
 
-  _send_msg(message) {
+  _sendMessage(message) {
     //console.log(message)
     this._ws.send(message)
   }
 
-  _process_mg(message) {
+  _processMessage(message) {
     //console.log(message)
     if (message.command == 'notifySessionEnded') {
       this.shutdown()

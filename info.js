@@ -33,6 +33,12 @@ module.exports = class {
       })
     })
 
+    router.get('/playlist/:id', (req, res) => {
+      this.getPlaylistInfo(req.params.id, (err, result) => {
+        json_status(res, err, result)
+      })
+    })
+
     return router
 
   }
@@ -43,14 +49,10 @@ module.exports = class {
 
       // do it
       let api = new TidalApi(this._settings)
-
-      // get tracks
-      let response1 = await api.fetchTracks(albumId)
-      let tracks = await response1.json()
-
-
-      // done
-      if (cb) cb(null, tracks)
+      let tracks = await api.fetchAlbumTracks(albumId)
+      if (cb) {
+        cb(null, tracks)
+      }
 
     } catch (e) {
       console.log(e)
@@ -61,4 +63,24 @@ module.exports = class {
 
   }
   
+  async getPlaylistInfo(playlistId, cb) {
+
+    try {
+
+      // do it
+      let api = new TidalApi(this._settings)
+      let tracks = await api.fetchPlaylistTracks(playlistId)
+      if (cb) {
+        cb(null, tracks)
+      }
+
+    } catch (e) {
+      console.log(e)
+      if (cb) {
+        cb(e)
+      }
+    }
+
+  }
+
 }

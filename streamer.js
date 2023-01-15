@@ -23,7 +23,7 @@ module.exports = class {
 
   constructor(settings) {
     this._settings = settings
-    this._discover_devices()
+    this._discoverDevices()
   }
 
   routes() {
@@ -32,6 +32,12 @@ module.exports = class {
 
     router.get('/album/:id', (req, res) => {
       this.streamAlbum(req.params.id, (err, result) => {
+        json_status(res, err, result)
+      })
+    })
+
+    router.get('/playlist/:id', (req, res) => {
+      this.streamPlaylist(req.params.id, (err, result) => {
         json_status(res, err, result)
       })
     })
@@ -45,20 +51,7 @@ module.exports = class {
     try {
 
       // we need a device
-      let device = this._get_device()
-      if (device == null) {
-        if (cb)  cb('No streaming device found')
-        return
-      }
-
-      // and we need to connect
-      let connect = new TidalConnect({}, device)
-      try {
-        await connect.connect()
-      } catch (e) {
-        if (cb) cb(`Unable to connect to ${device.ip}`)
-        return
-      }
+      let connect = await this._connectToDevice()
     
       // log
       console.log(`Streaming album: ${albumId}`)
@@ -67,31 +60,26 @@ module.exports = class {
       let api = new TidalApi(this._settings)
 
       // get tracks
-      let response1 = await api.fetchTracks(albumId)
-      let tracks = await response1.json()
+      let tracks = await api.fetchAlbumTracks(albumId)
 
       // some info
       let title = tracks.items[0].item.album.title
       let artist = tracks.items[0].item.artists[0].name
       let count = tracks.totalNumberOfItems
-      console.log(`  Device: ${device.name}`)
+      console.log(`  Device: ${connect.getDevice().name}`)
       console.log(`  Title: ${title}`)
       console.log(`  Artist: ${artist}`)
       console.log(`  Tracks: ${count}`)
 
-      // queue
-      let response2 = await api.queueTracks(tracks.items)
-      let queue = await response2.json()
-
-      // now we can queue!
-      await connect.loadQueue(api, queue, tracks)
-      connect.shutdown()
+      // stream
+      this._streamTracks(api, connect, tracks)
 
       // done
       if (cb) cb(null, {
+        id: albumId,
         title: title,
         artist: artist,
-        device: device
+        device: connect.getDevice()
       })
 
     } catch (e) {
@@ -103,7 +91,82 @@ module.exports = class {
 
   }
 
-  _discover_devices() {
+  async streamPlaylist(playlistId, cb) {
+
+    try {
+
+      // we need a device
+      let connect = await this._connectToDevice()
+    
+      // log
+      console.log(`Streaming playlist: ${playlistId}`)
+      
+      // do it
+      let api = new TidalApi(this._settings)
+
+      // get tracks
+      let tracks = await api.fetchPlaylistTracks(playlistId)
+
+      // some info
+      let count = tracks.totalNumberOfItems
+      console.log(`  Device: ${connect.getDevice().name}`)
+      console.log(`  Tracks: ${count}`)
+
+      // stream
+      this._streamTracks(api, connect, tracks)
+
+      // done
+      if (cb) cb(null, {
+        id: playlistId,
+        device: connect.getDevice()
+      })
+
+    } catch (e) {
+      console.log(e)
+      if (cb) {
+        cb(e)
+      }
+    }
+
+  }
+
+  async _connectToDevice() {
+    
+    // we need a device
+    let device = this._getDevice()
+    if (device == null) {
+      throw new Error('No streaming device found')
+    }
+
+    // and we need to connect
+    let connect = new TidalConnect(this._settings, device)
+    try {
+      await connect.connect()
+    } catch (e) {
+      throw new Error(`Unable to connect to ${device.ip}`)
+    }
+
+    // done
+    return connect
+
+  }
+
+  async _streamTracks(api, connect, tracks) {
+
+    // queue
+    let response = await api.queueTracks(tracks.items)
+    let queue = await response.json()
+
+    // now we can queue!
+    await connect.loadQueue(api, queue, tracks)
+    connect.shutdown()
+
+    // done
+    return queue
+
+  }
+
+  _discoverDevices() {
     this._devices = {}
     new Discoverer((device) => {
       this._devices[device.ip] = device
@@ -117,7 +180,7 @@ module.exports = class {
     })
   }
 
-  _get_device() {
+  _getDevice() {
 
     let ips = Object.keys(this._devices)
     if (ips.length == 1) {

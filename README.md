@@ -43,6 +43,6 @@ device: 192.168.1.9
 
 ## TODO
 
-- Playlists
+- N/A
 
 
