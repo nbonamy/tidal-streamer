@@ -50,11 +50,11 @@ module.exports = class {
     return response.json()
   }
 
-  async queueTracks(tracks) {
+  async queueTracks(tracks, index) {
 
     let payload = {
       properties: {
-        position: 0
+        position: index
       },
       repeat_mode: 'off',
       shuffled: false,

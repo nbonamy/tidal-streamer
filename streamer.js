@@ -31,13 +31,13 @@ module.exports = class {
     const router = express.Router()
 
     router.get('/album/:id', (req, res) => {
-      this.streamAlbum(req.params.id, (err, result) => {
+      this.streamAlbum(req.params.id, req.query.index, (err, result) => {
         json_status(res, err, result)
       })
     })
 
     router.get('/playlist/:id', (req, res) => {
-      this.streamPlaylist(req.params.id, (err, result) => {
+      this.streamPlaylist(req.params.id, req.query.index, (err, result) => {
         json_status(res, err, result)
       })
     })
@@ -46,7 +46,7 @@ module.exports = class {
 
   }
 
-  async streamAlbum(albumId, cb) {
+  async streamAlbum(albumId, index, cb) {
 
     try {
 
@@ -63,8 +63,9 @@ module.exports = class {
       let tracks = await api.fetchAlbumTracks(albumId)
 
       // some info
-      let title = tracks.items[0].item.album.title
-      let artist = tracks.items[0].item.artists[0].name
+      index = index || 0
+      let title = tracks.items[index].item.album.title
+      let artist = tracks.items[index].item.artists[0].name
       let count = tracks.totalNumberOfItems
       console.log(`  Device: ${connect.getDevice().name}`)
       console.log(`  Title: ${title}`)
@@ -72,7 +73,7 @@ module.exports = class {
       console.log(`  Tracks: ${count}`)
 
       // stream
-      this._streamTracks(api, connect, tracks)
+      this._streamTracks(api, connect, tracks, index)
 
       // done
       if (cb) cb(null, {
@@ -91,7 +92,7 @@ module.exports = class {
 
   }
 
-  async streamPlaylist(playlistId, cb) {
+  async streamPlaylist(playlistId, index, cb) {
 
     try {
 
@@ -113,7 +114,7 @@ module.exports = class {
       console.log(`  Tracks: ${count}`)
 
       // stream
-      this._streamTracks(api, connect, tracks)
+      this._streamTracks(api, connect, tracks, index || 0)
 
       // done
       if (cb) cb(null, {
@@ -151,10 +152,10 @@ module.exports = class {
 
   }
 
-  async _streamTracks(api, connect, tracks) {
+  async _streamTracks(api, connect, tracks, index) {
 
     // queue
-    let response = await api.queueTracks(tracks.items)
+    let response = await api.queueTracks(tracks.items, index)
     let queue = await response.json()
 
     // now we can queue!

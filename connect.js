@@ -58,10 +58,13 @@ module.exports = class {
 
   async loadQueue(api, queue, tracks) {
 
+    // get index
+    let index = parseInt(queue.properties?.position || 0)
+
     // big payload!
     let params = {
       autoplay: true,
-      position: parseInt(queue.properties?.position || 0),
+      position: index,
     }
     params.queueServerInfo = {
       serverUrl: `${api.getQueueBaseUrl()}/queues`,
@@ -86,15 +89,15 @@ module.exports = class {
       maxAfterSize: 10
     }
     params.currentMediaInfo = {
-      itemId: queue.items[0].id,
-      mediaId: queue.items[0].media_id,
+      itemId: queue.items[index].id,
+      mediaId: queue.items[index].media_id,
       mediaType: 0,
       metadata: {
-        title: tracks.items[0].item.title,
-        artists: tracks.items[0].item.artists.map((a) => a.name),
-        albumTitle: tracks.items[0].item.album.title,
-        duration: tracks.items[0].item.duration * 1000,
-        images: api.getAlbumCovers(tracks.items[0].item.album.cover)
+        title: tracks.items[index].item.title,
+        artists: tracks.items[index].item.artists.map((a) => a.name),
+        albumTitle: tracks.items[index].item.album.title,
+        duration: tracks.items[index].item.duration * 1000,
+        images: api.getAlbumCovers(tracks.items[index].item.album.cover)
       }
     }
 
