@@ -4,7 +4,7 @@ A server that enables streaming TIDAL music to a TIDAL connect device without us
 
 ## Setup
 
-Install dependencies:
+tidal-streamer relies on the `mdns` package which itself has some system depenencies. Please check the `mdns` [installation guide](https://www.npmjs.com/package/mdns) else the following command will fail. Once done you can install dependencies:
 
 `npm install`
 
