@@ -1,5 +1,5 @@
 
-const uuid = require('uuid')
+const md5 = require('md5')
 const express = require('express')
 const Discoverer = require('./discoverer');
 const TidalApi = require('./api')
@@ -257,7 +257,7 @@ module.exports = class {
       try {
       
         await this._connectToDevice(device)
-        device.uuid = uuid.v4()
+        device.uuid = md5(`${device.name}-${device.ip}`)
         device.info = function() { return { uuid: this.uuid, name: this.name }}
         this._devices[device.name] = device
       
