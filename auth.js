@@ -4,6 +4,11 @@ const AUTH_BASE_URL = 'https://auth.tidal.com/v1/oauth2'
 const GRANT_TYPE = 'urn:ietf:params:oauth:grant-type:device_code'
 const SCOPE = 'r_usr w_usr w_sub'
 
+// we need fetch
+if (typeof fetch == 'undefined') {
+  fetch = require('node-fetch')
+}
+
 module.exports = class {
 
   constructor(settings) {

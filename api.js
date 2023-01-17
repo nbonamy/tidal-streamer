@@ -6,6 +6,11 @@ const QUEUE_BASE_URL = 'https://connectqueue.tidal.com/v1'
 const COUNTRY_CODE = 'US'
 const LIMIT = 100
 
+// we need fetch
+if (typeof fetch == 'undefined') {
+  fetch = require('node-fetch')
+}
+
 module.exports = class {
 
   constructor(settings) {
@@ -79,7 +84,7 @@ module.exports = class {
   async _callApi(path, params) {
     let url = this._getUrl(path, params)
     console.log(url)
-    let response = await fetch(url, this._getFetchOptions())
+    let response = await fetch2(url, this._getFetchOptions())
     return response.json()
   }
 
