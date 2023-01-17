@@ -84,7 +84,7 @@ module.exports = class {
   async _callApi(path, params) {
     let url = this._getUrl(path, params)
     console.log(url)
-    let response = await fetch2(url, this._getFetchOptions())
+    let response = await fetch(url, this._getFetchOptions())
     return response.json()
   }
 
