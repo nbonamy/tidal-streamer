@@ -72,10 +72,10 @@ module.exports = class {
 
     return fetch(`${QUEUE_BASE_URL}/queues?countryCode=${this._countryCode}`, {
       method: 'POST',
-      headers: new Headers({
+      headers: {
         'Authorization': `Bearer ${this._access_token}`,
         'Content-Type': 'application/json'
-      }),
+      },
       body: JSON.stringify(payload)
     })
 
@@ -118,9 +118,9 @@ module.exports = class {
 
   _getFetchOptions() {
     return {
-      headers: new Headers({
+      headers: {
         'Authorization': `Bearer ${this._access_token}`
-      })
+      }
     }
   }
 
