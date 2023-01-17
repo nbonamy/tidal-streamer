@@ -38,6 +38,7 @@ module.exports = class {
             host: service.host,
             port: service.port,
           })
+          break
         }
       }
     });

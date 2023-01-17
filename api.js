@@ -3,7 +3,6 @@
 const AUTH_BASE_URL = 'https://auth.tidal.com/v1/oauth2'
 const API_BASE_URL = 'https://api.tidal.com/v1'
 const QUEUE_BASE_URL = 'https://connectqueue.tidal.com/v1'
-const RESOURCES_BASE_URL = 'https://resources.tidal.com'
 const COUNTRY_CODE = 'US'
 
 module.exports = class {
@@ -50,11 +49,11 @@ module.exports = class {
     return response.json()
   }
 
-  async queueTracks(tracks, index) {
+  queueTracks(tracks, position) {
 
     let payload = {
       properties: {
-        position: index
+        position: position
       },
       repeat_mode: 'off',
       shuffled: false,
@@ -81,24 +80,6 @@ module.exports = class {
       body: JSON.stringify(payload)
     })
 
-  }
-
-  getAlbumCovers(albumId) {
-    const baseUrl = `${RESOURCES_BASE_URL}/images/${albumId.replace(/-/g, '/')}`;
-    return {
-      high: {
-        url: `${baseUrl}/1280x1280.jpg`,
-        width: 1280, height: 1280,
-      },
-      medium: {
-        url: `${baseUrl}/640x640.jpg`,
-        width: 640, height: 640,
-      },
-      low: {
-        url: `${baseUrl}/320x320.jpg`,
-        width: 320, height: 320,
-      }
-    }
   }
 
   getAuthInfo() {

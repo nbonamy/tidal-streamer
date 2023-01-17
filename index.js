@@ -56,8 +56,9 @@ portfinder.getPort({ port: startPort },  async (err, port) => {
 
   // our server
   const app = express()
+  app.use(express.json());
   app.use('/info', info.routes())
-  app.use('/play', streamer.routes())
+  app.use('/', streamer.routes())
 
 	// start it
 	app.listen(port, () => {

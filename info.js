@@ -1,21 +1,7 @@
 
 const express = require('express')
 const TidalApi = require('./api')
-
-const json_status = function(res, err, result) {
-  try {
-    if (err) {
-      res.status(err.code||500).json({ status: 'error', error: err.message||err })
-    } else {
-      res.json({ status: 'ok', result: result||'' })
-    }
-  } catch (err) {
-    console.error(err)
-    try {
-      res.json({ status: 'error', error: err })
-    } catch {}
-  }
-}
+const { json_status } = require('./utils')
 
 module.exports = class {
 
@@ -51,18 +37,14 @@ module.exports = class {
       let api = new TidalApi(this._settings)
       let info = await api.fetchAlbumInfo(albumId)
       let tracks = await api.fetchAlbumTracks(albumId)
-      if (cb) {
-        cb(null, {
-          ...info,
-          ...tracks
-        })
-      }
+      cb?.(null, {
+        ...info,
+        ...tracks
+      })
 
     } catch (e) {
-      console.log(e)
-      if (cb) {
-        cb(e)
-      }
+      console.error(e)
+      cb?.(e)
     }
 
   }
@@ -74,15 +56,11 @@ module.exports = class {
       // do it
       let api = new TidalApi(this._settings)
       let tracks = await api.fetchPlaylistTracks(playlistId)
-      if (cb) {
-        cb(null, tracks)
-      }
+      cb?.(null, tracks)
 
     } catch (e) {
-      console.log(e)
-      if (cb) {
-        cb(e)
-      }
+      console.error(e)
+      cb?.(e)
     }
 
   }
