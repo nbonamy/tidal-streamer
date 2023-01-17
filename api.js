@@ -4,6 +4,7 @@ const AUTH_BASE_URL = 'https://auth.tidal.com/v1/oauth2'
 const API_BASE_URL = 'https://api.tidal.com/v1'
 const QUEUE_BASE_URL = 'https://connectqueue.tidal.com/v1'
 const COUNTRY_CODE = 'US'
+const LIMIT = 100
 
 module.exports = class {
 
@@ -23,32 +24,25 @@ module.exports = class {
   }
 
   async fetchAlbumInfo(albumId) {
-    let response = await fetch(`${API_BASE_URL}/albums/${albumId}?countryCode=${this._countryCode}`, {
-      headers: new Headers({
-        'Authorization': `Bearer ${this._access_token}`
-      })
-    })
-    return response.json()
+    return this._callApi(`/albums/${albumId}`)
   }
 
   async fetchAlbumTracks(albumId) {
-    let response = await fetch(`${API_BASE_URL}/albums/${albumId}/items?limit=100&countryCode=${this._countryCode}`, {
-      headers: new Headers({
-        'Authorization': `Bearer ${this._access_token}`
-      })
-    })
-    return response.json()
+    return this._callApi(`/albums/${albumId}/items`, { limit: LIMIT })
   }
 
   async fetchPlaylistTracks(playlistId) {
-    let response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/items?limit=100&countryCode=${this._countryCode}`, {
-      headers: new Headers({
-        'Authorization': `Bearer ${this._access_token}`
-      })
-    })
-    return response.json()
+    return this._callApi(`/playlists/${playlistId}/items`, { limit: LIMIT })
   }
 
+  async fetchArtistAlbums(artistId) {
+    return this._callApi(`/artists/${artistId}/albums`)
+  }
+  
+  async search(type, query) {
+    return this._callApi(`/search/${type}`, { query: query, limit: LIMIT })
+  }
+  
   queueTracks(tracks, position) {
 
     let payload = {
@@ -82,6 +76,13 @@ module.exports = class {
 
   }
 
+  async _callApi(path, params) {
+    let url = this._getUrl(path, params)
+    console.log(url)
+    let response = await fetch(url, this._getFetchOptions())
+    return response.json()
+  }
+
   getAuthInfo() {
     return {
       'oauthServerInfo': {
@@ -99,6 +100,22 @@ module.exports = class {
           'grant_type': 'switch_client'
         }
       }
+    }
+  }
+
+  _getUrl(path, params) {
+    let url = `${API_BASE_URL}${path}?countryCode=${this._countryCode}`
+    for (let key in params) {
+      url += `&${key}=${encodeURIComponent(params[key])}`
+    }
+    return url
+  }
+
+  _getFetchOptions() {
+    return {
+      headers: new Headers({
+        'Authorization': `Bearer ${this._access_token}`
+      })
     }
   }
 

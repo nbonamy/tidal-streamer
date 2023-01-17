@@ -4,8 +4,9 @@ const portfinder = require('portfinder')
 const mdns = require('mdns');
 const Config = require('./config')
 const Auth = require('./auth')
-const Info = require('./info')
+const Metadata = require('./metadata')
 const Streamer = require('./streamer')
+const { json_status } = require('./utils')
 
 // init our stuff
 const settings = new Config()
@@ -41,7 +42,7 @@ auth.is_auth().then(async (rc) => {
 })
   
 // now we can build our modules
-const info = new Info(settings)
+const metadata = new Metadata(settings)
 const streamer = new Streamer(settings)
 
 // we need a port
@@ -57,8 +58,14 @@ portfinder.getPort({ port: startPort },  async (err, port) => {
   // our server
   const app = express()
   app.use(express.json());
-  app.use('/info', info.routes())
+  app.use('/', metadata.routes())
   app.use('/', streamer.routes())
+
+  // error handler
+  app.use((err, req, res, next) => {
+    console.error(err.stack)
+    json_status(res, err)
+  })  
 
 	// start it
 	app.listen(port, () => {
