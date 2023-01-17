@@ -79,7 +79,7 @@ module.exports = class {
     })
 
     router.post('/prev', async (req, res) => {
-      await req.device.connect.sendCommand('prev');
+      await req.device.connect.sendCommand('previous');
       json_status(res, null, 'ok')
     })
 
