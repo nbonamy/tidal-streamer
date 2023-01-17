@@ -1,6 +1,8 @@
 const WebSocket = require('ws')
 const { getAlbumCovers } = require('./utils')
 
+const CONNECT_RETRY_DELAY = 5000
+
 module.exports = class {
 
   constructor(settings, device) {
@@ -48,6 +50,11 @@ module.exports = class {
 
   connect() {
 
+    // clear
+    clearTimeout(this._retryTimer)
+    this._retryTimer =  null
+
+    //
     return new Promise((resolve, reject) => {
 
       // open our websocket
@@ -254,8 +261,19 @@ module.exports = class {
 
     //
     if (message.command == 'notifyPlayerStatusChanged') {
-      this._status.state = message.playerState
-      this._status.progress = message.progress
+      if (this._status.tracks.length) {
+        this._status.state = message.playerState
+        this._status.progress = message.progress
+      }
+      return
+    }
+
+    //
+    if (message.command == 'notifySessionError') {
+      console.log(`[ERR] ${this._device.ip}: Unsuccessful connection. Retrying in ${CONNECT_RETRY_DELAY} ms.`)
+      this._retryTimer = setTimeout(() => {
+        this._connect()
+      }, CONNECT_RETRY_DELAY)
       return
     }
 
