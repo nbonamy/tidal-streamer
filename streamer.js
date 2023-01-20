@@ -60,41 +60,41 @@ module.exports = class {
 
     router.post('/play', async (req, res) => {
       await req.device.connect.sendCommand('play');
-      json_status(res, null, 'ok')
+      json_status(res)
     })
 
     router.post('/pause', async (req, res) => {
       await req.device.connect.sendCommand('pause');
-      json_status(res, null, 'ok')
+      json_status(res)
     })
 
     router.post('/stop', async (req, res) => {
       await req.device.connect.stop();
-      json_status(res, null, 'ok')
+      json_status(res)
     })
 
     router.post('/next', async (req, res) => {
       await req.device.connect.sendCommand('next');
-      json_status(res, null, 'ok')
+      json_status(res)
     })
 
     router.post('/prev', async (req, res) => {
       await req.device.connect.sendCommand('previous');
-      json_status(res, null, 'ok')
+      json_status(res)
     })
 
     router.post('/trackseek/:position', async (req, res) => {
       try {
         await req.device.connect.goto(parseInt(req.params.position))
-        json_status(res, null, 'ok')
-      } catch (e) {
-        json_status(res, e)
+        json_status(res)
+      } catch (err) {
+        json_status(res, err)
       }
     })
 
     router.post('/timeseek/:progress', async (req, res) => {
       await req.device.connect.sendCommand('seek', { position: req.params.progress * 1000 });
-      json_status(res, null, 'ok')
+      json_status(res)
     })
 
     return router
@@ -295,8 +295,7 @@ module.exports = class {
     // if we have a uuid then find it
     if (uuid != null) {
       let matches = devices.find((d) => d.uuid == uuid)
-      if (matches.length == 1) return matches[0]
-      else return null
+      return matches
     }
 
     // if we have only one device then good

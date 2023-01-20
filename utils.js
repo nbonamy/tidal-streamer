@@ -8,7 +8,7 @@ module.exports = {
       if (err) {
         res.status(err.code||500).json({ status: 'error', error: err.message||err, details: err })
       } else {
-        res.json({ status: 'ok', result: result||'' })
+        res.json({ status: 'ok', result: result||'success' })
       }
     } catch (err) {
       console.error(err)
