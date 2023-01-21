@@ -45,7 +45,7 @@ module.exports = class {
   }
 
   async fetchArtistAlbums(artistId) {
-    return this._callApi(`/artists/${artistId}/albums`)
+    return this._callApi(`/artists/${artistId}/albums`, { limit: LIMIT })
   }
   
   async search(type, query) {
