@@ -28,6 +28,10 @@ module.exports = class {
     return QUEUE_BASE_URL
   }
 
+  async fetchTrackInfo(trackId) {
+    return this._callApi(`/tracks/${trackId}`)
+  }
+
   async fetchAlbumInfo(albumId) {
     return this._callApi(`/albums/${albumId}`)
   }
@@ -46,6 +50,13 @@ module.exports = class {
   
   async search(type, query) {
     return this._callApi(`/search/${type}`, { query: query, limit: LIMIT })
+  }
+
+  async fetchQueue(queueId) {
+    let url = `${QUEUE_BASE_URL}/queues/${queueId}/items?offset=0&limit=${LIMIT}&countryCode=${this._countryCode}`
+    let response = await fetch(url, this._getFetchOptions())
+    return response.json()
+
   }
   
   queueTracks(tracks, position) {

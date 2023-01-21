@@ -1,4 +1,5 @@
 const WebSocket = require('ws')
+const TidalApi = require('./api')
 const { getAlbumCovers } = require('./utils')
 
 const CONNECT_RETRY_DELAY = 5000
@@ -18,6 +19,7 @@ module.exports = class {
   }
 
   _resetStatus() {
+    this._lastMediaId = null
     this._status = {
       state: 'STOPPED',
       queue: null,
@@ -205,6 +207,47 @@ module.exports = class {
     this._ws.send(message)
   }
 
+  async _reloadQueue(queueId) {
+
+    // we need an api
+    let api = new TidalApi(this._settings)
+
+    // fetch queue
+    let queue = await api.fetchQueue(queueId)
+
+    // now fetch each item
+    let tracks = []
+    for (let item of queue.items) {
+      let item_id = item.media_id
+      let track = await api.fetchTrackInfo(item_id)
+      tracks.push({
+        item: track,
+        type: 'track'
+      })
+    }
+
+    // save all
+    this._status.queue = queue
+    this._status.tracks = tracks
+    this._setStatusPosition()
+    
+  }
+
+  _getLastMediaPosition() {
+    if (this._lastMediaId == null) return -1
+    else if (this._status.tracks == null) return -1
+    return this._status.tracks.findIndex((t) => t.item.id == this._lastMediaId)
+  }
+
+  _setStatusPosition() {
+    let old_position = this._status.position
+    let new_position = this._getLastMediaPosition()
+    if (new_position != old_position) {
+      this._status.position = new_position
+      console.log(`Position updated: ${this._status.position}`)
+    }
+  }
+
   _processMessage(message) {
 
     //
@@ -237,8 +280,8 @@ module.exports = class {
     //
     if (message.command == 'notifyQueueChanged') {
       let queueId = message.queueInfo.queueId
-      if (this._status.queue != null && this._status.queue.id != queueId) {
-        this._resetStatus()
+      if (this._status.queue == null || this._status.queue.id != queueId) {
+        this._reloadQueue(queueId)
       }
       return
     }
@@ -252,10 +295,8 @@ module.exports = class {
     //
     if (message.command == 'notifyMediaChanged') {
       this._status.progress = 0
-      if (this._status.tracks != null && this._status.tracks.length) {
-        this._status.position = this._status.tracks.findIndex((t) => t.item.id == message.mediaInfo.mediaId)
-        console.log(`Track updated: ${this._status.position}`)
-      }
+      this._lastMediaId = message.mediaInfo.mediaId
+      this._setStatusPosition()
       return
     }
 
