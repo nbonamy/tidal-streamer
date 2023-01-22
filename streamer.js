@@ -33,7 +33,11 @@ module.exports = class {
     })
 
     router.get('/list', (req, res) => {
-      res.json(Object.values(this._devices).map((d) => d.info()))
+      let devices = []
+      for (let device of Object.values(this._devices)) {
+        if (device.info != null) devices.push(device.info())
+      }
+      res.json(devices)
     })
 
     router.get('/status', (req, res) => {
