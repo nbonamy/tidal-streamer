@@ -28,16 +28,17 @@ module.exports = class {
       next()
     })
 
-    router.get('/ping', (req, res) => {
-      res.json('pong')
-    })
-
     router.get('/list', (req, res) => {
       let devices = []
       for (let device of Object.values(this._devices)) {
         if (device.info != null) devices.push(device.info())
       }
       res.json(devices)
+    })
+
+    router.get('/ping', (req, res) => {
+      if (req.device?.connect?.connected()) res.json('pong')
+      else json_status(res, 'device not connected')
     })
 
     router.get('/status', (req, res) => {
@@ -116,7 +117,7 @@ module.exports = class {
       let api = new TidalApi(this._settings)
 
       // some info
-      console.log(`  Device: ${connect.device().name}`)
+      console.log(`  Device: ${connect.device().description}`)
 
       // stream
       this._streamTracks(api, connect, tracks.items.map((t) => {
@@ -166,7 +167,7 @@ module.exports = class {
       let title = tracks.items[position].item.album.title
       let artist = tracks.items[position].item.artists[0].name
       let count = tracks.totalNumberOfItems
-      console.log(`  Device: ${connect.device().name}`)
+      console.log(`  Device: ${connect.device().description}`)
       console.log(`  Title: ${title}`)
       console.log(`  Artist: ${artist}`)
       console.log(`  Tracks: ${count}`)
@@ -204,7 +205,7 @@ module.exports = class {
 
       // some info
       let count = tracks.totalNumberOfItems
-      console.log(`  Device: ${connect.device().name}`)
+      console.log(`  Device: ${connect.device().description}`)
       console.log(`  Tracks: ${count}`)
 
       // stream
@@ -253,7 +254,7 @@ module.exports = class {
       } else if (current.connect == null) {
         return // reserved
       } else {
-        this._disconnectFromDevice(current)
+        await this._disconnectFromDevice(current)
         delete this._devices[device.name]
       }
 
@@ -262,16 +263,16 @@ module.exports = class {
       
         await this._connectToDevice(device)
         device.uuid = md5(`${device.name}-${device.ip}`)
-        device.info = function() { return { uuid: this.uuid, name: this.name }}
+        device.info = function() { return { uuid: this.uuid, name: this.description }}
         this._devices[device.name] = device
       
       } catch (e) {
         throw new Error(`Unable to connect to ${device.name}@${device.ip}: ${e}`)
       }
 
-    }, (name) => {
+    }, async (name) => {
       let current = this._devices[name]
-      this._disconnectFromDevice(current)
+      await this._disconnectFromDevice(current)
       delete this._devices[name]
     })
   
@@ -284,9 +285,9 @@ module.exports = class {
   }
 
   async _disconnectFromDevice(device) {
-    if (device != null && device.connect != null) {
+    if (device != null) {
       device.connect?.shutdown()
-      device.connect = null      
+      device.connect = null
     }
   }
 

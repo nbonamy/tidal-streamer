@@ -15,6 +15,8 @@ module.exports = class {
   _reset() {
     this._reqid = 0
     this._sessionId = 0
+    this._connected = false
+    this._heartbeat = 0
     this._resetStatus()
   }
 
@@ -34,20 +36,28 @@ module.exports = class {
     return this._device
   }
 
+  connected() {
+    return this._connected
+  }
+
   status() {
     return this._status
   }
 
   shutdown() {
+    
+    // try to clean properly
     try {
       clearInterval(this._heartbeat)
       this._ws.close()
       this._ws.terminate()
-      this._reset()
-      console.log(`Websocket disconnected from ${this._device.name}`)
+      console.log(`Disconnected from ${this._device.description}`)
     } catch (e) {
       console.error(`Error while closing connection to ${this._device.ip}: ${e}`)
     }
+
+    // reset anyway
+    this._reset()
   }
 
   connect() {
@@ -70,12 +80,23 @@ module.exports = class {
           appName: 'tidal',
           sessionCredential: '190108211'
         }))
-        console.log(`Connected to ${this._device.name}@${this._device.ip}`)
+        console.log(`Connected to ${this._device.description}@${this._device.ip}`)
         resolve()
+      })
+      this._ws.on('close', (e) => {
+        console.log(`Closing connection to ${this._device.description}@${this._device.ip}`)
+        // setTimeout(() => {
+        //   this._reset()
+        //   this.connect()
+        // }, 500)
       })
       this._ws.on('error', (e) => {
         reject(e)
-        this.connect()
+        console.log(`Error while connecting to ${this._device.description}@${this._device.ip}`)
+        // setTimeout(() => {
+        //   this._reset()
+        //   this.connect()
+        // }, 500)
       })
       this._ws.on('message', (message) => {
         this._processMessage(JSON.parse(message.toString()))
@@ -253,6 +274,7 @@ module.exports = class {
     //
     if (message.command == 'notifySessionStarted') {
       //console.log(message)
+      this._connected = true
       if (this._sessionId == 0) {
         this._sessionId = message.sessionId
       }

@@ -32,7 +32,8 @@ module.exports = class {
         if (net.isIPv4(service_ip)) {
           //console.log(`Device found ${service.name}: ${service.host}:${service.port}`)
           this.cbUp({
-            name: service.txtRecord?.fn || service.name,
+            name: service.name,
+            description: service.txtRecord?.fn || service.name,
             type: device_type,
             ip: service_ip,
             host: service.host,
