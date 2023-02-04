@@ -4,6 +4,12 @@ const { getAlbumCovers } = require('./utils')
 
 const CONNECT_RETRY_DELAY = 5000
 
+Array.prototype.swap = function(i, j) {
+  const item = this[i]
+  this.splice(i, 1)
+  this.splice(j, 0, item)
+}
+
 module.exports = class {
 
   constructor(settings, device) {
@@ -174,6 +180,59 @@ module.exports = class {
 
   }
 
+  async dequeueTrack(api, position) {
+
+    // the queue
+    let queue = this._status?.queue
+    if (queue?.id == null) return
+
+    try {
+
+      // remove at queue server
+      let trackId = queue.items[position].id
+      await api.deleteFromQueue(queue, trackId)
+
+      // update our queue
+      this._status.tracks.splice(position, 1)
+      queue.items.splice(position, 1)
+      queue.total = queue.total - 1
+      
+      // tell device to reload
+      await this.sendCommand('refreshQueue', { queueId: queue.id })
+
+    } catch (err) {
+      console.log(err)
+    }
+  
+  }
+
+  async reorderQueue(api, from, to) {
+
+    // the queue
+    let queue = this._status?.queue
+    if (queue?.id == null) return
+
+    try {
+
+      // remove at queue server
+      let moveId = queue.items[from].id
+      let afterId = queue.items[to].id
+      let res = await api.reorderQueue(queue, moveId, afterId)
+      console.log(await res.text())
+
+      // update our queue
+      this._status.tracks.swap(from, to)
+      queue.items.swap(from, to)
+      
+      // tell device to reload
+      await this.sendCommand('refreshQueue', { queueId: queue.id })
+
+    } catch (err) {
+      console.log(err)
+    }
+  
+  }
+
   goto(position) {
 
     // check
@@ -236,16 +295,8 @@ module.exports = class {
     // fetch queue
     let queue = await api.fetchQueue(queueId)
 
-    // now fetch each item
-    let tracks = []
-    for (let item of queue.items) {
-      let item_id = item.media_id
-      let track = await api.fetchTrackInfo(item_id)
-      tracks.push({
-        item: track,
-        type: 'track'
-      })
-    }
+    // now fetch content
+    let tracks = await api.fetchQueueContent(queue)
 
     // save all
     this._status.queue = queue

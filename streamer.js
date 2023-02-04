@@ -63,6 +63,26 @@ module.exports = class {
       })
     })
 
+    router.post('/dequeue/:position', async (req, res) => {
+      try {
+        let api = new TidalApi(this._settings)
+        await req.device.connect.dequeueTrack(api, parseInt(req.params.position));
+        json_status(res)
+      } catch (err) {
+        json_status(res, err)
+      }
+    })
+
+    router.post('/reorderqueue/:from/:to', async (req, res) => {
+      try {
+        let api = new TidalApi(this._settings)
+        await req.device.connect.reorderQueue(api, parseInt(req.params.from), parseInt(req.params.to));
+        json_status(res)
+      } catch (err) {
+        json_status(res, err)
+      }
+    })
+
     router.post('/play', async (req, res) => {
       await req.device.connect.sendCommand('play');
       json_status(res)
@@ -111,13 +131,13 @@ module.exports = class {
     try {
 
       // log
-      console.log(`Streaming ${tracks.items.length} tracks`)
+      // console.log(`Streaming ${tracks.items.length} tracks`)
       
       // do it
       let api = new TidalApi(this._settings)
 
       // some info
-      console.log(`  Device: ${connect.device().description}`)
+      // console.log(`  Device: ${connect.device().description}`)
 
       // stream
       this._streamTracks(api, connect, tracks.items.map((t) => {
@@ -154,7 +174,7 @@ module.exports = class {
     try {
 
       // log
-      console.log(`Streaming album: ${albumId}`)
+      // console.log(`Streaming album: ${albumId}`)
       
       // do it
       let api = new TidalApi(this._settings)
@@ -166,11 +186,11 @@ module.exports = class {
       position = position || 0
       let title = tracks.items[position].item.album.title
       let artist = tracks.items[position].item.artists[0].name
-      let count = tracks.totalNumberOfItems
-      console.log(`  Device: ${connect.device().description}`)
-      console.log(`  Title: ${title}`)
-      console.log(`  Artist: ${artist}`)
-      console.log(`  Tracks: ${count}`)
+      // let count = tracks.totalNumberOfItems
+      // console.log(`  Device: ${connect.device().description}`)
+      // console.log(`  Title: ${title}`)
+      // console.log(`  Artist: ${artist}`)
+      // console.log(`  Tracks: ${count}`)
 
       // stream
       await this._streamTracks(api, connect, tracks.items, position)
@@ -195,7 +215,7 @@ module.exports = class {
     try {
 
       // log
-      console.log(`Streaming playlist: ${playlistId}`)
+      // console.log(`Streaming playlist: ${playlistId}`)
       
       // do it
       let api = new TidalApi(this._settings)
@@ -204,9 +224,9 @@ module.exports = class {
       let tracks = await api.fetchPlaylistTracks(playlistId)
 
       // some info
-      let count = tracks.totalNumberOfItems
-      console.log(`  Device: ${connect.device().description}`)
-      console.log(`  Tracks: ${count}`)
+      // let count = tracks.totalNumberOfItems
+      // console.log(`  Device: ${connect.device().description}`)
+      // console.log(`  Tracks: ${count}`)
 
       // stream
       await this._streamTracks(api, connect, tracks.items, position || 0)
@@ -229,6 +249,7 @@ module.exports = class {
     // queue
     let response = await api.queueTracks(tracks, position)
     let queue = await response.json()
+    queue.etag = response.headers.get('etag')
 
     // check
     if (queue.error != null) {
