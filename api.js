@@ -38,15 +38,15 @@ module.exports = class {
   }
 
   async fetchAlbumTracks(albumId) {
-    return this._callApi(`/albums/${albumId}/items`, { limit: LIMIT })
+    return await this._fetchAll(`/albums/${albumId}/items`)
   }
 
   async fetchPlaylistTracks(playlistId) {
-    return this._callApi(`/playlists/${playlistId}/items`, { limit: LIMIT })
+    return await this._fetchAll(`/playlists/${playlistId}/items`)
   }
 
   async fetchArtistAlbums(artistId) {
-    return this._callApi(`/artists/${artistId}/albums`, { limit: LIMIT })
+    return await this._fetchAll(`/artists/${artistId}/albums`)
   }
   
   async search(type, query) {
@@ -69,19 +69,29 @@ module.exports = class {
 
   async fetchQueueContent(queue) {
 
-    // /content has a limit of LIMIT_QUEUE_CONTENT
+    // init
+    let tracks = []
+    let remaining = queue.total
+
     try {
-      if (queue.total <= LIMIT_QUEUE_CONTENT) {
-        let response = await this._callQueue(`/content/${queue.id}`, { offset: 0, limit: LIMIT_QUEUE_CONTENT })
+      
+      // may need several calls
+      while (remaining > 0) {
+        let response = await this._callQueue(`/content/${queue.id}`, { offset: tracks.length, limit: LIMIT_QUEUE_CONTENT })
         let content = await response.json()
-        return content.items
+        remaining -= content.items.length
+        tracks = [...tracks, ...content.items]
       }
+
+      // done
+      return tracks
+
     } catch {
 
     }
 
-    // we need to fetch one by one
-    let tracks = []
+    // let's try one by one
+    tracks = []
     for (let item of queue.items) {
       let item_id = item.media_id
       let track = await this.fetchTrackInfo(item_id)
@@ -152,6 +162,38 @@ module.exports = class {
       body: JSON.stringify(payload)
     })
 
+  }
+
+  async _fetchAll(path) {
+
+    // init
+    let result = null
+    let remaining = null
+
+    // iterate
+    while (true) {
+      try {
+        let response = await this._callApi(path, { offset: result?.items?.length || 0, limit: LIMIT })
+        if (response?.items?.length == 0) {
+          break
+        } else if (result == null) {
+          result = response
+          remaining = response.totalNumberOfItems - response.items.length
+        } else {
+          result.items = [...result.items, ...response.items ]
+          remaining = remaining - response.items.length
+        }
+        if (remaining <= 0) {
+          break
+        }
+      } catch (_) {
+        break
+      }
+    }
+    
+    // done
+    return result
+  
   }
 
   async _callApi(path, params) {
