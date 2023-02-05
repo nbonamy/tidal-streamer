@@ -180,13 +180,13 @@ module.exports = class {
           result = response
           remaining = response.totalNumberOfItems - response.items.length
         } else {
-          result.items = [...result.items, ...response.items ]
+          result.items = [...result.items, ...response.items]
           remaining = remaining - response.items.length
         }
         if (remaining <= 0) {
           break
         }
-      } catch (_) {
+      } catch {
         break
       }
     }
