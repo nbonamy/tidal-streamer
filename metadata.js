@@ -31,6 +31,12 @@ module.exports = class {
         .catch(err => next(err))
     })
 
+    router.get('/lyrics/:id', (req, res, next) => {
+      this.getTrackLyrics(req.params.id)
+        .then((result) => json_status(res, null, result))
+        .catch(err => next(err))
+    })
+
     router.get('/search/artist', (req, res, next) => {
       this.searchArtists(req.query.query)
         .then((result) => json_status(res, null, result))
@@ -61,6 +67,12 @@ module.exports = class {
     let api = new TidalApi(this._settings)
     let tracks = await api.fetchPlaylistTracks(playlistId)
     return tracks
+  }
+  
+  async getTrackLyrics(trackId) {
+    let api = new TidalApi(this._settings)
+    let lyrics = await api.fetchTrackLyrics(trackId)
+    return lyrics
   }
 
   async searchArtists(query) {

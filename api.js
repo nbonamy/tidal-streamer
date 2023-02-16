@@ -48,6 +48,10 @@ module.exports = class {
   async fetchArtistAlbums(artistId) {
     return await this._fetchAll(`/artists/${artistId}/albums`)
   }
+
+  async fetchTrackLyrics(trackId) {
+    return await this._callApi(`/tracks/${trackId}/lyrics`)
+  }
   
   async search(type, query) {
     return this._callApi(`/search/${type}`, { query: query, limit: LIMIT })
