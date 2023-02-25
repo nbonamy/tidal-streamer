@@ -32,7 +32,7 @@ module.exports = class {
       }
 
       // we need to refesh
-      let refreshed = await this._refresh_token()
+      let refreshed = await this.refresh_token()
       resolve(refreshed)
 
     })
@@ -87,7 +87,7 @@ module.exports = class {
 
   }
 
-  async _refresh_token() {
+  async refresh_token() {
 
     // get it
     let response = await fetch(`${AUTH_BASE_URL}/token`, {

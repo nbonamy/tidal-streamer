@@ -1,4 +1,6 @@
 
+const Auth = require('./auth')
+
 // some constants
 const AUTH_BASE_URL = 'https://auth.tidal.com/v1/oauth2'
 const API_BASE_URL = 'https://api.tidal.com/v1'
@@ -17,8 +19,6 @@ module.exports = class {
   constructor(settings) {
     this._settings = settings
     this._countryCode = settings.countryCode || COUNTRY_CODE
-    this._access_token = settings.auth.access_token
-    this._refresh_token = settings.auth.refresh_token
   }
 
   getApiBaseUrl() {
@@ -122,7 +122,7 @@ module.exports = class {
     let response = await this._callQueue(`/queues/${queue.id}/items`, null, {
       method: 'PATCH',
       headers: {
-        'Authorization': `Bearer ${this._access_token}`,
+        'Authorization': `Bearer ${this._accessToken()}`,
         'Content-Type': 'application/json',
         'If-Match': queue.etag,
       },
@@ -160,7 +160,7 @@ module.exports = class {
     return this._callQueue(`/queues`, null, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this._access_token}`,
+        'Authorization': `Bearer ${this._accessToken()}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
@@ -201,10 +201,33 @@ module.exports = class {
   }
 
   async _callApi(path, params) {
-    let url = this._getUrl(API_BASE_URL, path, params)
-    console.log(`GET ${url}`)
-    let response = await fetch(url, this._getFetchOptions())
-    return response.json()
+
+    // we may try two times in case token is invalid
+    for (let i=0; i<2; i++) {
+
+      // call it
+      let url = this._getUrl(API_BASE_URL, path, params)
+      console.log(`GET ${url}`)
+      let response = await fetch(url, this._getFetchOptions())
+
+      // parse and check auth
+      let json = await response.json();
+      if (i != 0 || json.status != 401) {
+        return json;
+      }
+
+      // try to renew token
+      let auth = new Auth(this._settings)
+      let renewed = await auth.refresh_token()
+      if (renewed == false) {
+        return json;
+      }
+
+      // refresh settings
+      this._settings.reload()
+
+    }
+    
   }
 
   async _callQueue(path, params, options) {
@@ -218,10 +241,10 @@ module.exports = class {
       'oauthServerInfo': {
         'serverUrl': `${AUTH_BASE_URL}/token`,
         'authInfo': {
-          'headerAuth': `Bearer ${this._access_token}`,
+          'headerAuth': `Bearer ${this._accessToken()}`,
           'oauthParameters': {
-            'accessToken': this._access_token,
-            'refreshToken': this._refresh_token,
+            'accessToken': this._accessToken(),
+            'refreshToken': this._refreshToken(),
           }
         },
         'httpHeaderFields': [],
@@ -244,9 +267,12 @@ module.exports = class {
   _getFetchOptions() {
     return {
       headers: {
-        'Authorization': `Bearer ${this._access_token}`
+        'Authorization': `Bearer ${this._accessToken()}`
       }
     }
   }
+
+  _accessToken = () => this._settings.auth.access_token
+  _refreshToken = () => this._settings.auth.refresh_token
 
 }

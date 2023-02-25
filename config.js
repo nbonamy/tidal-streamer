@@ -7,6 +7,10 @@ FILENAME = 'config.yml'
 module.exports = class {
 
   constructor() {
+    this.reload()
+  }
+
+  reload() {
     this._init()
     this._load()
   }
